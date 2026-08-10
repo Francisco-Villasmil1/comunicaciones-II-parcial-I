@@ -1,0 +1,64 @@
+version: "3.9"
+
+services:
+
+  database:
+    image: postgres:16
+    container_name: blog-db
+
+    restart: always
+
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: 123456
+      POSTGRES_DB: blog_db
+
+    ports:
+      - "5432:5432"
+
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+    networks:
+      - blog-network
+
+  backend:
+    build: ./blog-api-main
+
+    container_name: blog-api
+
+    depends_on:
+      - database
+
+    ports:
+      - "4000:4000"
+
+    environment:
+      DATABASE_URL: postgresql://postgres:123456@database:5432/blog_db?schema=public
+      PORT: 4000
+      JWT_SECRET: comunicacionII
+      JWT_EXPIRES_IN: 1d
+
+    networks:
+      - blog-network
+
+  frontend:
+    build: ./blog-client-main
+
+    container_name: blog-client
+
+    depends_on:
+      - backend
+
+    ports:
+      - "5173:5173"
+
+    networks:
+      - blog-network
+
+volumes:
+  postgres_data:
+
+networks:
+  blog-network:
+    driver: bridge

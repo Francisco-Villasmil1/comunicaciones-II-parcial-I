@@ -1,0 +1,3 @@
+DROP TABLE IF EXISTS "reacciones" CASCADE;
+
+DROP TYPE IF EXISTS "TipoReaccion";

@@ -1,0 +1,82 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ------------------------------------------------------
+// Enums
+// ------------------------------------------------------
+
+enum RolUsuario {
+  DUENO  @map("dueno")
+  LECTOR @map("lector")
+}
+
+// ------------------------------------------------------
+// Modelos
+// ------------------------------------------------------
+
+model Usuario {
+  id            Int          @id @default(autoincrement())
+  nombre        String
+  apellido      String
+  correo        String       @unique
+  password      String
+  rol           RolUsuario   @default(LECTOR)
+  isActive      Boolean      @default(true) @map("is_active")
+  fechaRegistro DateTime     @default(now()) @map("fecha_registro")
+
+  // Relaciones
+  publicaciones Publicacion[] @relation("PublicacionesAutor")
+  comentarios   Comentario[]  @relation("ComentariosUsuario")
+
+  @@map("usuarios")
+}
+
+model Publicacion {
+  id            Int          @id @default(autoincrement())
+  titulo        String
+  contenido     String?      @db.Text // Opcional: permite publicaciones de SOLO imágenes
+  idAutor       Int          @map("id_autor")
+  fechaCreacion DateTime     @default(now()) @map("fecha_creacion")
+  fechaUpdate   DateTime     @updatedAt @map("fecha_update")
+
+  // Relaciones
+  autor         Usuario      @relation("PublicacionesAutor", fields: [idAutor], references: [id])
+  imagenes      Imagen[]
+  comentarios   Comentario[]
+
+  @@index([idAutor])
+  @@map("publicaciones")
+}
+
+model Imagen {
+  id            Int         @id @default(autoincrement())
+  url           String
+  descripcion   String?     @map("descripcion")
+  idPublicacion Int         @map("id_publicacion")
+
+  publicacion   Publicacion @relation(fields: [idPublicacion], references: [id], onDelete: Cascade)
+
+  @@index([idPublicacion])
+  @@map("imagenes")
+}
+
+model Comentario {
+  id            Int         @id @default(autoincrement())
+  contenido     String      @db.Text
+  idUsuario     Int         @map("id_usuario")
+  idPublicacion Int         @map("id_publicacion")
+  fechaRegistro DateTime    @default(now()) @map("fecha_registro")
+
+  usuario       Usuario     @relation("ComentariosUsuario", fields: [idUsuario], references: [id], onDelete: Cascade)
+  publicacion   Publicacion @relation(fields: [idPublicacion], references: [id], onDelete: Cascade)
+
+  @@index([idUsuario])
+  @@index([idPublicacion])
+  @@map("comentarios")
+}
